@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sydney to Manila Time Converter</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #f5f5f5;
+    --white:    #ffffff;
+    --border:   #e0e0e0;
+    --text:     #1a1a1a;
+    --muted:    #6b6b6b;
+    --subtle:   #f0f0f0;
+    --accent:   #1a1a1a;
+    --result-bg:#f9f9f9;
+    --error:    #c0392b;
+    --manila:   #1a1a1a;
+    --sydney:   #555555;
+    --badge-bg: #efefef;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .brand {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  input[type="date"],
+  input[type="time"] {
+    width: 100%;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 11px 13px;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input[type="date"]:focus,
+  input[type="time"]:focus {
+    border-color: var(--text);
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: 0.4;
+    cursor: pointer;
+  }
+
+  .time-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .btn {
+    width: 100%;
+    background: var(--text);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    padding: 13px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: opacity 0.15s;
+  }
+
+  .btn:hover { opacity: 0.82; }
+  .btn:active { opacity: 0.7; }
+
+  .error-msg {
+    color: var(--error);
+    font-size: 12px;
+    margin-top: 6px;
+    display: none;
+    font-weight: 500;
+  }
+
+  /* Result */
+  .result-card {
+    margin-top: 16px;
+    background: var(--result-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    display: none;
+  }
+
+  .result-card.visible { display: block; }
+
+  .result-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .time-block {
+    margin-bottom: 16px;
+  }
+
+  .time-block-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .time-range {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .time-value {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--manila);
+  }
+
+  .time-sep {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  .time-block.sydney .time-value {
+    font-size: 18px;
+    color: var(--sydney);
+    font-weight: 600;
+  }
+
+  .time-date {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 3px;
+    font-weight: 400;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 14px 0;
+  }
+
+  .dst-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--badge-bg);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .note {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: var(--subtle);
+    border-radius: 6px;
+    font-weight: 400;
+  }
+
+  .note strong { color: var(--text); font-weight: 600; }
+
+
+  .footer {
+    margin-top: 20px;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    font-weight: 400;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">Shutter 360</div>
+  <h1>Sydney &rarr; Manila</h1>
+  <p class="subtitle">Convert event times for Bigin bookings. Daylight saving handled automatically.</p>
+</div>
+
+<div class="card">
+  <div class="field">
+    <label for="dateInput">Event Date (Sydney)</label>
+    <input type="date" id="dateInput">
+  </div>
+
+  <div class="time-row">
+    <div class="field">
+      <label for="startTime">Start Time (Sydney)</label>
+      <input type="time" id="startTime" value="10:00">
+    </div>
+    <div class="field">
+      <label for="endTime">End Time (Sydney)</label>
+      <input type="time" id="endTime" value="12:00">
+    </div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <button class="btn" onclick="convert()">Convert to Manila Time</button>
+
+  <div class="result-card" id="result">
+
+    <div class="result-label">Enter in Bigin</div>
+
+    <div class="time-block">
+      <div class="time-block-label">Manila Time</div>
+      <div class="time-range">
+        <span class="time-value" id="manilaStart"></span>
+        <span class="time-sep">&ndash;</span>
+        <span class="time-value" id="manilaEnd"></span>
+      </div>
+      <div class="time-date" id="manilaDate"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="time-block sydney">
+      <div class="time-block-label">
+        Sydney Time (client sees)
+        <span class="dst-badge" id="dstBadge"></span>
+      </div>
+      <div class="time-range">
+        <span class="time-value" id="sydneyStart"></span>
+        <span class="time-sep">&ndash;</span>
+        <span class="time-value" id="sydneyEnd"></span>
+      </div>
+      <div class="time-date" id="sydneyDate"></div>
+    </div>
+
+    <div class="note" id="offsetNote"></div>
+
+  </div>
+</div>
+
+<div class="footer">Manila is UTC+8 year-round. Sydney is UTC+10 standard, UTC+11 during daylight saving (Oct&ndash;Apr).</div>
+
+<script>
+  document.getElementById('dateInput').value = new Date().toISOString().slice(0, 10);
+
+  function getSydneyOffsetHours(utcMs) {
+    var parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Australia/Sydney',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false
+    }).formatToParts(new Date(utcMs));
+
+    var p = {};
+    parts.forEach(function(x) { p[x.type] = parseInt(x.value, 10); });
+
+    var h = (p.hour === 24) ? 0 : p.hour;
+    var wallAsUTC = Date.UTC(p.year, p.month - 1, p.day, h, p.minute, p.second);
+    return Math.round((wallAsUTC - utcMs) / 3600000);
+  }
+
+  function sydneyToUTC(dateStr, timeStr) {
+    var dp = dateStr.split('-');
+    var year   = parseInt(dp[0], 10);
+    var month  = parseInt(dp[1], 10);
+    var day    = parseInt(dp[2], 10);
+    var tp = timeStr.split(':');
+    var hour   = parseInt(tp[0], 10);
+    var minute = parseInt(tp[1], 10);
+
+    var seed   = Date.UTC(year, month - 1, day, hour - 10, minute, 0);
+    var offset = getSydneyOffsetHours(seed);
+    var utcMs  = Date.UTC(year, month - 1, day, hour - offset, minute, 0);
+
+    var finalOffset = getSydneyOffsetHours(utcMs);
+    if (finalOffset !== offset) {
+      utcMs = Date.UTC(year, month - 1, day, hour - finalOffset, minute, 0);
+    }
+    return utcMs;
+  }
+
+  function fmtTime(utcMs, tz) {
+    return new Intl.DateTimeFormat('en-AU', {
+      timeZone: tz,
+      hour: 'numeric', minute: '2-digit', hour12: true
+    }).format(new Date(utcMs));
+  }
+
+  function fmtDate(utcMs, tz) {
+    return new Intl.DateTimeFormat('en-AU', {
+      timeZone: tz,
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    }).format(new Date(utcMs));
+  }
+
+  function convert() {
+    var dateStr  = document.getElementById('dateInput').value;
+    var startStr = document.getElementById('startTime').value;
+    var endStr   = document.getElementById('endTime').value;
+    var errorEl  = document.getElementById('errorMsg');
+    var resultEl = document.getElementById('result');
+
+    if (!dateStr || !startStr || !endStr) {
+      errorEl.textContent = 'Please fill in the date, start time, and end time.';
+      errorEl.style.display = 'block';
+      resultEl.classList.remove('visible');
+      return;
+    }
+    errorEl.style.display = 'none';
+
+    var startUTC = sydneyToUTC(dateStr, startStr);
+    var endUTC   = sydneyToUTC(dateStr, endStr);
+    var sydOff   = getSydneyOffsetHours(startUTC);
+    var dst      = sydOff === 11;
+    var diff     = 8 - sydOff;
+    var absDiff  = Math.abs(diff);
+    var dir      = diff < 0 ? 'behind' : 'ahead of';
+
+    document.getElementById('manilaStart').textContent = fmtTime(startUTC, 'Asia/Manila');
+    document.getElementById('manilaEnd').textContent   = fmtTime(endUTC, 'Asia/Manila');
+    document.getElementById('manilaDate').textContent  = fmtDate(startUTC, 'Asia/Manila');
+
+    document.getElementById('sydneyStart').textContent = fmtTime(startUTC, 'Australia/Sydney');
+    document.getElementById('sydneyEnd').textContent   = fmtTime(endUTC, 'Australia/Sydney');
+    document.getElementById('sydneyDate').textContent  = fmtDate(startUTC, 'Australia/Sydney');
+
+    document.getElementById('dstBadge').textContent = dst ? 'DST' : 'No DST';
+
+    document.getElementById('offsetNote').innerHTML =
+      'Sydney is <strong>UTC+' + sydOff + '</strong> on this date. ' +
+      'Manila is <strong>' + absDiff + ' hour' + (absDiff !== 1 ? 's' : '') + ' ' + dir + ' Sydney</strong>. ' +
+      'Enter the Manila time above when making the booking in Bigin and it will display as Sydney time in our calendar and communications to the client.';
+
+    resultEl.classList.add('visible');
+  }
+
+
+  document.addEventListener('keydown', function(e) { if (e.key === 'Enter') convert(); });
+</script>
+</body>
+</html>
