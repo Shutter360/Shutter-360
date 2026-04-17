@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sydney Parking Finder</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container { max-width: 960px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 28px; }
+    header h1 { font-size: 26px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.5px; }
+    header p  { margin-top: 6px; color: #666; font-size: 14px; }
+
+    .badges { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+    .badge  { display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-secure { background: #e8f0fe; color: #1a73e8; }
+    .badge-wilson { background: #fce8e6; color: #c5221f; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+
+    .form-group { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      color: #1a1a2e;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fafafa;
+    }
+
+    input[type="text"]:focus { border-color: #1a73e8; background: #fff; }
+
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      margin-top: 0;
+    }
+
+    .input-row .form-group { flex: 1; }
+
+    .search-btn {
+      padding: 11px 28px;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+      height: 42px;
+    }
+    .search-btn:hover    { background: #1557b0; }
+    .search-btn:disabled { background: #aac4f0; cursor: not-allowed; }
+
+    /* Map */
+    #map-section { padding: 0; overflow: hidden; }
+    #map { height: 420px; width: 100%; border-radius: 12px; display: block; }
+
+    /* Status / Error */
+    #status {
+      text-align: center; padding: 14px; font-size: 14px; color: #555; display: none;
+    }
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2.5px solid #ddd; border-top-color: #1a73e8;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+      vertical-align: middle; margin-right: 7px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #error-msg {
+      background: #fce8e6; color: #c5221f; border-radius: 8px;
+      padding: 12px 16px; font-size: 14px; display: none; margin-bottom: 16px;
+    }
+
+    /* Results */
+    #results-section { display: none; }
+
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .results-header h2 { font-size: 16px; font-weight: 700; }
+    .results-count { font-size: 13px; color: #888; }
+
+    .filter-row { display: flex; gap: 7px; margin-bottom: 16px; }
+    .filter-btn {
+      padding: 5px 13px; border: 1.5px solid #ddd; border-radius: 20px;
+      background: #fafafa; font-size: 13px; cursor: pointer; color: #555; transition: all 0.15s;
+    }
+    .filter-btn.active { border-color: #1a73e8; background: #e8f0fe; color: #1a73e8; font-weight: 600; }
+
+    .origin-info {
+      background: #e8f0fe; border-radius: 8px; padding: 9px 13px;
+      font-size: 13px; color: #1557b0; margin-bottom: 14px;
+      display: none; align-items: center; gap: 7px;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px; color: #999;
+      padding: 9px 12px; border-bottom: 2px solid #f0f0f0;
+    }
+    tbody tr { border-bottom: 1px solid #f5f5f5; transition: background 0.1s; cursor: pointer; }
+    tbody tr:hover { background: #fafbff; }
+    tbody td { padding: 13px 12px; font-size: 14px; vertical-align: top; }
+
+    .parking-name  { font-weight: 600; color: #1a1a2e; font-size: 14px; }
+    .parking-brand {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      padding: 2px 6px; border-radius: 4px; margin-top: 3px;
+      text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .brand-secure { background: #e8f0fe; color: #1a73e8; }
+    .brand-wilson { background: #fce8e6; color: #c5221f; }
+    .brand-other  { background: #f0f0f0; color: #555; }
+
+    .address-text  { color: #555; font-size: 13px; }
+    .dist-value    { font-weight: 700; color: #1a1a2e; }
+    .dist-label    { font-size: 11px; color: #bbb; }
+    .rating-stars  { color: #f9a825; font-size: 13px; }
+
+    .price-level   { font-weight: 700; color: #34a853; font-size: 14px; letter-spacing: 1px; }
+    .price-unknown { font-size: 12px; }
+
+    .action-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 13px; text-decoration: none; color: #1a73e8; font-weight: 500;
+    }
+    .action-link:hover { text-decoration: underline; }
+    .rates-link { color: #34a853; margin-top: 5px; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; text-decoration: none; font-weight: 500; }
+    .rates-link:hover { text-decoration: underline; }
+
+    .no-results { text-align: center; padding: 40px; color: #888; font-size: 15px; }
+
+    /* Legend */
+    .map-legend {
+      display: flex; gap: 16px; padding: 10px 16px;
+      border-top: 1px solid #f0f0f0; flex-wrap: wrap;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; }
+    .legend-dot  { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+    footer { text-align: center; margin-top: 24px; font-size: 12px; color: #bbb; }
+
+    @media (max-width: 600px) {
+      .input-row { flex-direction: column; }
+      .search-btn { width: 100%; }
+      thead th:nth-child(3), tbody td:nth-child(3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Sydney Parking Finder</h1>
+    <p>Find the nearest Secure Parking and Wilson Parking from any Sydney address.</p>
+    <div class="badges">
+      <span class="badge badge-secure">&#x25CF; Secure Parking</span>
+      <span class="badge badge-wilson">&#x25CF; Wilson Parking</span>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="input-row">
+      <div class="form-group">
+        <label>Sydney Address</label>
+        <input type="text" id="address-input" placeholder="e.g. 1 Martin Place, Sydney" />
+      </div>
+      <button class="search-btn" id="search-btn" onclick="startSearch()">Find Parking</button>
+    </div>
+  </div>
+
+  <div id="error-msg"></div>
+  <div id="status"></div>
+
+  <!-- Map -->
+  <div id="map-section" class="card" style="display:none;">
+    <div id="map"></div>
+    <div class="map-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#34a853;"></div> Your location</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fbbc04; border: 2px solid #e37400;"></div> Closest parking</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1a73e8;"></div> Secure Parking</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#c5221f;"></div> Wilson Parking</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#888;"></div> Other</div>
+    </div>
+  </div>
+
+  <!-- Results table -->
+  <div id="results-section" class="card">
+    <div class="results-header">
+      <h2>Nearby Parking</h2>
+      <span class="results-count" id="results-count"></span>
+    </div>
+    <div id="origin-info" class="origin-info"></div>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filterResults('all', this)">All</button>
+      <button class="filter-btn" onclick="filterResults('secure', this)">Secure Parking</button>
+      <button class="filter-btn" onclick="filterResults('wilson', this)">Wilson Parking</button>
+    </div>
+    <div id="results-container"></div>
+  </div>
+
+  <footer>Distances are straight-line. Actual rates vary — check operator websites for current pricing.</footer>
+
+</div>
+
+<script>
+  const API_KEY = 'AIzaSyAA28Wil19oEfJLgMJMBk_6aAgtoMDqMrU';
+
+  const SEARCH_RADIUS = 10000; // cast wide net, then take top 5
+  const MAX_RESULTS   = 5;
+
+  let allResults   = [];
+  let mapsLoaded   = false;
+  let gMap         = null;
+  let markers      = [];
+  let infoWindows  = [];
+  let originMarker = null;
+
+  // ── Status / Error helpers ────────────────────────────────────────
+  function showStatus(msg) {
+    const el = document.getElementById('status');
+    el.innerHTML = '<span class="spinner"></span>' + msg;
+    el.style.display = 'block';
+  }
+  function hideStatus() { document.getElementById('status').style.display = 'none'; }
+  function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+  function hideError() { document.getElementById('error-msg').style.display = 'none'; }
+
+  // ── Distance ─────────────────────────────────────────────────────
+  function haversineKm(lat1, lng1, lat2, lng2) {
+    const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLng = (lng2-lng1)*Math.PI/180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+  function formatDist(km) {
+    return km < 1 ? Math.round(km * 1000) + ' m' : km.toFixed(2) + ' km';
+  }
+
+  // ── Brand detection ───────────────────────────────────────────────
+  function getBrand(name) {
+    const n = name.toLowerCase();
+    if (n.includes('secure parking') || n.includes('secureparking')) return 'secure';
+    if (n.includes('wilson')) return 'wilson';
+    return 'other';
+  }
+
+  // ── Price level ───────────────────────────────────────────────────
+  function renderPrice(brand, priceLevel, website) {
+    if (priceLevel != null) {
+      if (priceLevel === 0) return '<span class="price-level">Free</span>';
+      const dollars = '$'.repeat(priceLevel);
+      const grey    = '<span style="color:#ddd;">$</span>'.repeat(4 - priceLevel);
+      return `<span class="price-level">${dollars}</span>${grey}`;
+    }
+    // Use the specific car park website from Google Places if available,
+    // otherwise fall back to the operator's generic finder page
+    const fallback = brand === 'secure'
+      ? 'https://www.secureparking.com.au/en-au/'
+      : brand === 'wilson'
+      ? 'https://www.wilsonparking.com.au/find-a-park/'
+      : null;
+    const ratesUrl = website || fallback;
+    if (ratesUrl) {
+      return `<a class="rates-link" href="${ratesUrl}" target="_blank">&#x1F4B0; Check rates</a>`;
+    }
+    return '<span class="price-unknown" style="color:#bbb;">—</span>';
+  }
+
+  // ── Stars ─────────────────────────────────────────────────────────
+  function renderStars(rating) {
+    if (!rating) return '<span style="color:#ccc;font-size:12px;">No rating</span>';
+    const full = Math.floor(rating);
+    const half = rating - full >= 0.5 ? 1 : 0;
+    const empty = 5 - full - half;
+    return `<span class="rating-stars">${'&#9733;'.repeat(full)}${half ? '&#9734;' : ''}${'&#9734;'.repeat(empty)}</span> <span style="font-size:12px;color:#666;">${rating.toFixed(1)}</span>`;
+  }
+
+  // ── Marker color ──────────────────────────────────────────────────
+  function markerColor(brand, isClosest) {
+    if (isClosest) return '#fbbc04';
+    if (brand === 'secure') return '#1a73e8';
+    if (brand === 'wilson') return '#c5221f';
+    return '#888888';
+  }
+
+  function svgPin(color, isClosest) {
+    const stroke = isClosest ? '#e37400' : '#fff';
+    const sw     = isClosest ? 2.5 : 1.5;
+    return {
+      path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z',
+      fillColor: color,
+      fillOpacity: 1,
+      strokeColor: stroke,
+      strokeWeight: sw,
+      scale: isClosest ? 2.2 : 1.8,
+      anchor: new google.maps.Point(12, 22),
+    };
+  }
+
+  // ── Map helpers ───────────────────────────────────────────────────
+  function clearMap() {
+    markers.forEach(m => m.setMap(null));
+    infoWindows.forEach(w => w.close());
+    if (originMarker) originMarker.setMap(null);
+    markers = []; infoWindows = []; originMarker = null;
+  }
+
+  function buildMap(center) {
+    if (!gMap) {
+      gMap = new google.maps.Map(document.getElementById('map'), {
+        center, zoom: 15,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+        styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }]
+      });
+    } else {
+      gMap.setCenter(center);
+      gMap.setZoom(15);
+    }
+  }
+
+  function addMarkers(results, originLatLng) {
+    clearMap();
+
+    // Origin marker (green)
+    originMarker = new google.maps.Marker({
+      position: originLatLng,
+      map: gMap,
+      title: 'Your location',
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: '#34a853',
+        fillOpacity: 1,
+        strokeColor: '#fff',
+        strokeWeight: 2.5,
+      },
+      zIndex: 999,
+    });
+
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(originLatLng);
+
+    results.forEach((r, i) => {
+      const isClosest = i === 0;
+      const brand     = getBrand(r.name);
+      const pos       = { lat: r.lat, lng: r.lng };
+      const color     = markerColor(brand, isClosest);
+
+      const marker = new google.maps.Marker({
+        position: pos,
+        map: gMap,
+        title: r.name,
+        icon: svgPin(color, isClosest),
+        zIndex: isClosest ? 100 : 10,
+      });
+
+      const brandLabel = brand === 'secure' ? 'Secure Parking' : brand === 'wilson' ? 'Wilson Parking' : '';
+      const priceHtml  = renderPrice(brand, r.price_level, r.website);
+      const mapsUrl    = `https://www.google.com/maps/search/?api=1&query_place_id=${r.place_id}`;
+
+      const infoContent = `
+        <div style="font-family:-apple-system,sans-serif;max-width:220px;padding:4px;">
+          ${isClosest ? '<div style="color:#e37400;font-size:11px;font-weight:700;margin-bottom:4px;">&#x1F3C6; CLOSEST</div>' : ''}
+          <div style="font-weight:700;font-size:14px;color:#1a1a2e;">${r.name}</div>
+          ${brandLabel ? `<div style="font-size:11px;color:#888;margin-top:2px;">${brandLabel}</div>` : ''}
+          <div style="font-size:13px;color:#555;margin-top:6px;">${r.vicinity || ''}</div>
+          <div style="margin-top:8px;display:flex;gap:12px;align-items:center;">
+            <span style="font-size:13px;font-weight:700;">${formatDist(r.distKm)}</span>
+            ${r.rating ? `<span style="font-size:13px;color:#f9a825;">&#9733; ${r.rating.toFixed(1)}</span>` : ''}
+          </div>
+          <div style="margin-top:6px;">${priceHtml}</div>
+          <div style="margin-top:10px;">
+            <a href="${mapsUrl}" target="_blank" style="color:#1a73e8;font-size:13px;font-weight:600;text-decoration:none;">&#x1F4CD; Open in Google Maps</a>
+          </div>
+        </div>`;
+
+      const iw = new google.maps.InfoWindow({ content: infoContent });
+
+      marker.addListener('click', () => {
+        infoWindows.forEach(w => w.close());
+        iw.open(gMap, marker);
+      });
+
+      markers.push(marker);
+      infoWindows.push(iw);
+      bounds.extend(pos);
+    });
+
+    gMap.fitBounds(bounds, { top: 60, right: 40, bottom: 40, left: 40 });
+  }
+
+  // ── Table ──────────────────────────────────────────────────────────
+  function renderTable(results) {
+    if (results.length === 0) {
+      return '<div class="no-results">No parking found in this area. Try a larger radius.</div>';
+    }
+
+    const rows = results.map((r, i) => {
+      const brand      = getBrand(r.name);
+      const brandLabel = brand === 'secure' ? 'Secure Parking' : brand === 'wilson' ? 'Wilson Parking' : 'Other';
+      const mapsUrl    = `https://www.google.com/maps/search/?api=1&query_place_id=${r.place_id}`;
+      const rankBadge  = i === 0 ? '&#x1F3C6; ' : '';
+      const priceHtml  = renderPrice(brand, r.price_level, r.website);
+
+      return `
+        <tr data-brand="${brand}" onclick="focusMarker(${i})">
+          <td>
+            <div class="parking-name">${rankBadge}${r.name}</div>
+            <span class="parking-brand brand-${brand}">${brandLabel}</span>
+          </td>
+          <td>
+            <span class="dist-value">${formatDist(r.distKm)}</span><br>
+            <span class="dist-label">straight-line</span>
+          </td>
+          <td>${priceHtml}</td>
+          <td><a class="action-link" href="${mapsUrl}" target="_blank" onclick="event.stopPropagation()">&#x1F4CD; Maps</a></td>
+        </tr>`;
+    }).join('');
+
+    return `
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Distance</th>
+            <th>Rate</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // Click a table row -> open that marker's InfoWindow
+  function focusMarker(index) {
+    if (!gMap || !markers[index]) return;
+    infoWindows.forEach(w => w.close());
+    infoWindows[index].open(gMap, markers[index]);
+    gMap.panTo(markers[index].getPosition());
+    document.getElementById('map-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // ── Filter ─────────────────────────────────────────────────────────
+  function filterResults(type, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const filtered = type === 'all' ? allResults : allResults.filter(r => getBrand(r.name) === type);
+    document.getElementById('results-container').innerHTML = renderTable(filtered);
+    document.getElementById('results-count').textContent =
+      filtered.length + ' location' + (filtered.length !== 1 ? 's' : '');
+  }
+
+  // ── Load Maps API ─────────────────────────────────────────────────
+  function loadGoogleMaps() {
+    return new Promise((resolve, reject) => {
+      if (mapsLoaded && window.google && window.google.maps) { resolve(); return; }
+      window._mapsReady = resolve;
+      const s = document.createElement('script');
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=_mapsReady`;
+      s.onerror = () => reject(new Error('Failed to load Google Maps. Check that Maps JavaScript API is enabled and billing is active.'));
+      document.head.appendChild(s);
+      mapsLoaded = true;
+    });
+  }
+
+  function textSearch(service, query, location, radius) {
+    return new Promise(resolve => {
+      service.textSearch({ query, location, radius }, (results, status) => {
+        resolve(status === google.maps.places.PlacesServiceStatus.OK ? (results || []) : []);
+      });
+    });
+  }
+
+  function getPlaceDetails(service, placeId) {
+    return new Promise(resolve => {
+      service.getDetails(
+        { placeId, fields: ['website'] },
+        (result, status) => {
+          resolve(status === google.maps.places.PlacesServiceStatus.OK ? result : null);
+        }
+      );
+    });
+  }
+
+  // ── Main search ───────────────────────────────────────────────────
+  async function startSearch() {
+    hideError();
+    const address = document.getElementById('address-input').value.trim();
+    if (!address) { showError('Enter a Sydney address to search from.'); return; }
+
+    document.getElementById('search-btn').disabled = true;
+    document.getElementById('results-section').style.display = 'none';
+    document.getElementById('map-section').style.display = 'none';
+    showStatus('Loading Google Maps...');
+
+    try {
+      await loadGoogleMaps();
+
+      showStatus('Geocoding address...');
+      const geocoder = new google.maps.Geocoder();
+      const geoResult = await new Promise((resolve, reject) => {
+        geocoder.geocode(
+          { address: address + ', Sydney, NSW, Australia' },
+          (results, status) => {
+            if (status === 'OK' && results.length > 0) resolve(results[0]);
+            else reject(new Error('Address not found. Try a more specific Sydney address.'));
+          }
+        );
+      });
+
+      const originLatLng    = geoResult.geometry.location;
+      const formattedAddress = geoResult.formatted_address;
+
+      // Build visible map early so PlacesService can use it
+      showStatus('Initialising map...');
+      document.getElementById('map-section').style.display = 'block';
+      buildMap(originLatLng);
+
+      const service = new google.maps.places.PlacesService(gMap);
+
+      showStatus('Searching for Secure Parking...');
+      const secureResults = await textSearch(service, 'Secure Parking', originLatLng, SEARCH_RADIUS);
+
+      showStatus('Searching for Wilson Parking...');
+      const wilsonResults = await textSearch(service, 'Wilson Parking', originLatLng, SEARCH_RADIUS);
+
+      showStatus('Building results...');
+
+      // Merge, deduplicate, annotate distance
+      const seen = new Set();
+      const combined = [];
+      for (const r of [...secureResults, ...wilsonResults]) {
+        if (!seen.has(r.place_id)) {
+          seen.add(r.place_id);
+          const lat    = r.geometry.location.lat();
+          const lng    = r.geometry.location.lng();
+          const distKm = haversineKm(originLatLng.lat(), originLatLng.lng(), lat, lng);
+          combined.push({ ...r, distKm, lat, lng });
+        }
+      }
+
+      allResults = combined
+        .sort((a, b) => a.distKm - b.distKm)
+        .slice(0, MAX_RESULTS);
+
+      showStatus('Fetching car park details...');
+      const details = await Promise.all(allResults.map(r => getPlaceDetails(service, r.place_id)));
+      allResults = allResults.map((r, i) => ({ ...r, website: details[i]?.website || null }));
+
+      hideStatus();
+
+      // Map markers
+      addMarkers(allResults, originLatLng);
+
+      // Origin info banner
+      const originEl = document.getElementById('origin-info');
+      originEl.innerHTML = `&#x1F4CD; Searching from: <strong>${formattedAddress}</strong>`;
+      originEl.style.display = 'flex';
+
+      // Table
+      document.getElementById('results-count').textContent =
+        allResults.length + ' location' + (allResults.length !== 1 ? 's' : '');
+      document.getElementById('results-container').innerHTML = renderTable(allResults);
+      document.getElementById('results-section').style.display = 'block';
+
+      // Reset filters
+      document.querySelectorAll('.filter-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+
+    } catch (err) {
+      hideStatus();
+      document.getElementById('map-section').style.display = 'none';
+      showError(err.message || 'Something went wrong. Check your API key and try again.');
+    } finally {
+      document.getElementById('search-btn').disabled = false;
+    }
+  }
+
+  // Enter key triggers search
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('address-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') startSearch();
+    });
+  });
+</script>
+</body>
+</html>
