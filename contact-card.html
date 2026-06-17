@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shutter 360 | Sydney Photobooth Hire</title>
+  <style>
+    /* ── CONFIG: edit these to match your brand ── */
+    :root {
+      --bg:       #0d0d0d;
+      --card:     #1a1a1a;
+      --accent:   #c8a96e;
+      --text:     #f0ede8;
+      --muted:    #888;
+      --radius:   14px;
+      --font:     'Helvetica Neue', Arial, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 36px 28px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--accent);
+      margin: 0 auto 20px;
+      display: block;
+      background: #2a2a2a;
+    }
+
+    .avatar-placeholder {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 3px solid var(--accent);
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent);
+      background: #2a2a2a;
+    }
+
+    .name {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      margin-bottom: 4px;
+    }
+
+    .title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .company {
+      font-size: 15px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 28px;
+    }
+
+    .details {
+      text-align: left;
+      margin-bottom: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .detail-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .detail-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+
+    .detail-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-value {
+      font-size: 14px;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .save-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: #0d0d0d;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: opacity 0.15s;
+    }
+
+    .save-btn:active { opacity: 0.8; }
+
+    .note {
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Admin panel (hidden by default) */
+    .admin-toggle {
+      margin-top: 32px;
+      font-size: 12px;
+      color: #444;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .admin-panel {
+      display: none;
+      margin-top: 24px;
+      background: #111;
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 400px;
+      width: 100%;
+      text-align: left;
+    }
+
+    .admin-panel h3 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .field-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus { border-color: var(--accent); }
+
+    .apply-btn {
+      width: 100%;
+      padding: 12px;
+      background: #2a2a2a;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 700;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 8px;
+      letter-spacing: 0.3px;
+      transition: background 0.15s;
+    }
+
+    .apply-btn:hover { background: #333; }
+
+    .export-btn {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 8px;
+      letter-spacing: 0.3px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       CONTACT DATA CONFIG
+       Edit this object to set your details.
+       All fields are optional except firstName.
+  ══════════════════════════════════════ -->
+  <script>
+    const CONTACT = {
+      firstName:    "Sydney Photobooth Hire | Shutter 360",
+      lastName:     "",
+      jobTitle:     "",
+      company:      "",
+      phone:        "",
+      mobile:       "+61435607262",
+      email:        "hello@shutter360.com.au",
+      website:      "https://shutter360.com.au",
+      instagram:    "https://www.instagram.com/360.shutter",
+      linkedin:     "",
+      address:      "",
+      note:         "",
+      photoUrl:     ""
+    };
+  </script>
+
+  <!-- Card UI -->
+  <div class="card" id="card">
+    <div id="avatar-container"></div>
+    <div class="name" id="ui-name"></div>
+    <div class="title" id="ui-title"></div>
+    <div class="company" id="ui-company"></div>
+    <div class="details" id="ui-details"></div>
+    <button class="save-btn" onclick="downloadVCard()">Save to Contacts</button>
+    <p class="note">Works on iPhone and Android.</p>
+  </div>
+
+  <span class="admin-toggle" onclick="toggleAdmin()">Configure</span>
+
+  <!-- Admin Panel -->
+  <div class="admin-panel" id="admin-panel">
+    <h3>Edit Contact Details</h3>
+    <div class="field-group"><label>First Name</label><input id="f-firstName" /></div>
+    <div class="field-group"><label>Last Name</label><input id="f-lastName" /></div>
+    <div class="field-group"><label>Job Title</label><input id="f-jobTitle" /></div>
+    <div class="field-group"><label>Company</label><input id="f-company" /></div>
+    <div class="field-group"><label>Mobile</label><input id="f-mobile" placeholder="+61 400 000 000" /></div>
+    <div class="field-group"><label>Phone (Work)</label><input id="f-phone" placeholder="+61 2 0000 0000" /></div>
+    <div class="field-group"><label>Email</label><input id="f-email" /></div>
+    <div class="field-group"><label>Website</label><input id="f-website" placeholder="https://" /></div>
+    <div class="field-group"><label>Instagram URL</label><input id="f-instagram" placeholder="https://www.instagram.com/yourhandle" /></div>
+    <div class="field-group"><label>LinkedIn URL</label><input id="f-linkedin" placeholder="https://linkedin.com/in/" /></div>
+    <div class="field-group"><label>Address</label><input id="f-address" /></div>
+    <div class="field-group"><label>Note</label><input id="f-note" placeholder="e.g. Shutter 360 | Photo Booth Hire" /></div>
+    <div class="field-group"><label>Photo URL</label><input id="f-photoUrl" placeholder="https://..." /></div>
+    <button class="apply-btn" onclick="applyAdmin()">Apply Changes</button>
+    <button class="export-btn" onclick="exportConfig()">Export config snippet</button>
+  </div>
+
+  <script>
+    // ── Render the card from CONTACT object ──
+    function renderCard(c) {
+      const fullName = [c.firstName, c.lastName].filter(Boolean).join(" ");
+
+      // Avatar
+      const ac = document.getElementById("avatar-container");
+      if (c.photoUrl) {
+        ac.innerHTML = `<img class="avatar" src="${c.photoUrl}" alt="${fullName}" />`;
+      } else {
+        const initials = [c.firstName?.[0], c.lastName?.[0]].filter(Boolean).join("") || "?";
+        ac.innerHTML = `<div class="avatar-placeholder">${initials}</div>`;
+      }
+
+      document.getElementById("ui-name").textContent    = fullName;
+      document.getElementById("ui-title").textContent   = c.jobTitle || "";
+      document.getElementById("ui-company").textContent = c.company  || "";
+
+      const details = [];
+      if (c.mobile)    details.push(["📱", "Mobile",    c.mobile,    `tel:${c.mobile}`]);
+      if (c.phone)     details.push(["☎️",  "Work",      c.phone,     `tel:${c.phone}`]);
+      if (c.email)     details.push(["✉️",  "Email",     c.email,     `mailto:${c.email}`]);
+      if (c.website)   details.push(["🌐", "Website",   c.website,   c.website]);
+      if (c.instagram) details.push(["📸", "Instagram", "@360.shutter", c.instagram]);
+      if (c.linkedin)  details.push(["💼", "LinkedIn",  "View Profile", c.linkedin]);
+      if (c.address)   details.push(["📍", "Address",   c.address,   null]);
+      if (c.note)      details.push(["📝", "Note",      c.note,      null]);
+
+      const container = document.getElementById("ui-details");
+      container.innerHTML = details.map(([icon, label, value, href]) => `
+        <div class="detail-row">
+          <div class="detail-icon">${icon}</div>
+          <div>
+            <div class="detail-label">${label}</div>
+            <div class="detail-value">${href ? `<a href="${href}" style="color:inherit;text-decoration:none;">${value}</a>` : value}</div>
+          </div>
+        </div>
+      `).join("");
+
+      // Hide empty sections
+      if (!c.jobTitle) document.getElementById("ui-title").style.display  = "none";
+      if (!c.company)  document.getElementById("ui-company").style.display = "none";
+      if (!details.length) container.style.display = "none";
+    }
+
+    // ── Build and download vCard 3.0 ──
+    function downloadVCard() {
+      const c = window._contact;
+      const lines = [
+        "BEGIN:VCARD",
+        "VERSION:3.0",
+        `N:${c.lastName || ""};${c.firstName || ""};;;`,
+        `FN:${[c.firstName, c.lastName].filter(Boolean).join(" ")}`,
+      ];
+      if (c.jobTitle)  lines.push(`TITLE:${c.jobTitle}`);
+      if (c.company)   lines.push(`ORG:${c.company}`);
+      if (c.mobile)    lines.push(`TEL;TYPE=CELL,VOICE:${c.mobile}`);
+      if (c.phone)     lines.push(`TEL;TYPE=WORK,VOICE:${c.phone}`);
+      if (c.email)     lines.push(`EMAIL;TYPE=INTERNET:${c.email}`);
+      if (c.website)   lines.push(`URL:${c.website}`);
+      if (c.instagram) lines.push(`URL;TYPE=Instagram:${c.instagram}`);
+      if (c.linkedin)  lines.push(`URL;TYPE=LinkedIn:${c.linkedin}`);
+      if (c.address)   lines.push(`ADR;TYPE=WORK:;;${c.address};;;;`);
+      if (c.note)      lines.push(`NOTE:${c.note}`);
+      lines.push("END:VCARD");
+
+      const blob = new Blob([lines.join("\r\n")], { type: "text/vcard" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `${[c.firstName, c.lastName].filter(Boolean).join("_") || "contact"}.vcf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ── Admin panel ──
+    function toggleAdmin() {
+      const p = document.getElementById("admin-panel");
+      const showing = p.style.display === "block";
+      p.style.display = showing ? "none" : "block";
+      if (!showing) populateAdmin(window._contact);
+    }
+
+    function populateAdmin(c) {
+      ["firstName","lastName","jobTitle","company","mobile","phone","email","website","instagram","linkedin","address","note","photoUrl"]
+        .forEach(k => { const el = document.getElementById("f-" + k); if (el) el.value = c[k] || ""; });
+    }
+
+    function applyAdmin() {
+      const fields = ["firstName","lastName","jobTitle","company","mobile","phone","email","website","instagram","linkedin","address","note","photoUrl"];
+      fields.forEach(k => {
+        const el = document.getElementById("f-" + k);
+        if (el) window._contact[k] = el.value.trim();
+      });
+      renderCard(window._contact);
+    }
+
+    function exportConfig() {
+      const c = window._contact;
+      const snippet = `const CONTACT = ${JSON.stringify(c, null, 2)};`;
+      const blob = new Blob([snippet], { type: "text/javascript" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = "contact-config.js";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ── Init ──
+    window._contact = Object.assign({}, CONTACT);
+    renderCard(window._contact);
+  </script>
+</body>
+</html>
